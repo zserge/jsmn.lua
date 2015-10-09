@@ -83,7 +83,7 @@ local function jsmn_parse_string(p, s)
 	return true
 end
 
-local function jsmn_parse(p, s)
+local function jsmn_parse(s, p)
 	p = p or {
 		str = s,
 		pos = 1,         -- position in the string
@@ -169,7 +169,7 @@ local function jsmn_parse(p, s)
 	return p, true, nil
 end
 
-M.parse = function(s) return jsmn_parse(nil, s) end
+M.parse = function(s) return jsmn_parse(s, nil) end
 
 return M
 
