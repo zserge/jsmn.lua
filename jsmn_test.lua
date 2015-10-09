@@ -148,73 +148,42 @@ test('String', function()
 end)
 
 test('Partial string', function()
-	--js = "\"x\": \"va";
-	--r = jsmn_parse(&p, js, strlen(js), tok, 10);
-	--check(r == JSMN_ERROR_PART && tok[0].type == JSMN_STRING);
-	--check(TOKEN_STRING(js, tok[0], "x"));
-	--check(p.toknext == 1);
-
-	--char js_slash[9] = "\"x\": \"va\\";
-	--r = jsmn_parse(&p, js_slash, sizeof(js_slash), tok, 10);
-	--check(r == JSMN_ERROR_PART);
-
-	--char js_unicode[10] = "\"x\": \"va\\u";
-	--r = jsmn_parse(&p, js_unicode, sizeof(js_unicode), tok, 10);
-	--check(r == JSMN_ERROR_PART);
-
-	--js = "\"x\": \"valu";
-	--r = jsmn_parse(&p, js, strlen(js), tok, 10);
-	--check(r == JSMN_ERROR_PART && tok[0].type == JSMN_STRING);
-	--check(TOKEN_STRING(js, tok[0], "x"));
-	--check(p.toknext == 1);
-
-	--js = "\"x\": \"value\"";
-	--r = jsmn_parse(&p, js, strlen(js), tok, 10);
-	--check(r >= 0 && tok[0].type == JSMN_STRING
-			--&& tok[1].type == JSMN_STRING);
-	--check(TOKEN_STRING(js, tok[0], "x"));
-	--check(TOKEN_STRING(js, tok[1], "value"));
-
-	--js = "\"x\": \"value\", \"y\": \"value y\"";
-	--r = jsmn_parse(&p, js, strlen(js), tok, 10);
-	--check(r >= 0 && tok[0].type == JSMN_STRING
-			--&& tok[1].type == JSMN_STRING && tok[2].type == JSMN_STRING
-			--&& tok[3].type == JSMN_STRING);
-	--check(TOKEN_STRING(js, tok[0], "x"));
-	--check(TOKEN_STRING(js, tok[1], "value"));
-	--check(TOKEN_STRING(js, tok[2], "y"));
-	--check(TOKEN_STRING(js, tok[3], "value y"));
+	local s = '{"x": "ab'
+	fail(s)
+	s = s .. '\\'
+	fail(s)
+	s = s .. 'u'
+	fail(s)
+	s = s .. '00'
+	fail(s)
+	s = s .. 'ff'
+	fail(s)
+	s = s .. '"'
+	fail(s)
+	s = s .. '}'
+	tokenize(s, {
+		{jsmn.OBJECT, size=1},
+		{jsmn.STRING, s='x', size=1},
+		{jsmn.STRING, s='ab\\u00ff'},
+	})
 end)
 
 test('Partial array', function()
-	--js = "  [ 1, true, ";
-	--r = jsmn_parse(&p, js, strlen(js), tok, 10);
-	--check(r == JSMN_ERROR_PART && tok[0].type == JSMN_ARRAY
-			--&& tok[1].type == JSMN_PRIMITIVE && tok[2].type == JSMN_PRIMITIVE);
-
-	--js = "  [ 1, true, [123, \"hello";
-	--r = jsmn_parse(&p, js, strlen(js), tok, 10);
-	--check(r == JSMN_ERROR_PART && tok[0].type == JSMN_ARRAY
-			--&& tok[1].type == JSMN_PRIMITIVE && tok[2].type == JSMN_PRIMITIVE
-			--&& tok[3].type == JSMN_ARRAY && tok[4].type == JSMN_PRIMITIVE);
-
-	--js = "  [ 1, true, [123, \"hello\"]";
-	--r = jsmn_parse(&p, js, strlen(js), tok, 10);
-	--check(r == JSMN_ERROR_PART && tok[0].type == JSMN_ARRAY
-			--&& tok[1].type == JSMN_PRIMITIVE && tok[2].type == JSMN_PRIMITIVE
-			--&& tok[3].type == JSMN_ARRAY && tok[4].type == JSMN_PRIMITIVE
-			--&& tok[5].type == JSMN_STRING);
-	--/* check child nodes of the 2nd array */
-	--check(tok[3].size == 2);
-
-	--js = "  [ 1, true, [123, \"hello\"]]";
-	--r = jsmn_parse(&p, js, strlen(js), tok, 10);
-	--check(r >= 0 && tok[0].type == JSMN_ARRAY
-			--&& tok[1].type == JSMN_PRIMITIVE && tok[2].type == JSMN_PRIMITIVE
-			--&& tok[3].type == JSMN_ARRAY && tok[4].type == JSMN_PRIMITIVE
-			--&& tok[5].type == JSMN_STRING);
-	--check(tok[3].size == 2);
-	--check(tok[0].size == 3);
+	local s = '  [ 1, true, '
+	fail(s)
+	s = s .. '[123, "hello"'
+	fail(s)
+	s = s .. ']'
+	fail(s)
+	s = s .. ']'
+	tokenize(s, {
+		{jsmn.ARRAY, size=3},
+		{jsmn.PRIMITIVE, s='1'},
+		{jsmn.PRIMITIVE, s='true'},
+		{jsmn.ARRAY, size=2},
+		{jsmn.PRIMITIVE, s='123'},
+		{jsmn.STRING, s='hello'},
+	})
 end)
 
 test('Invalid objects/arrays', function()

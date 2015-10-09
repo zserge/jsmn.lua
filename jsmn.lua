@@ -51,9 +51,12 @@ local function jsmn_parse_string(p, s)
 		local c = s:byte(p.pos)
 		if c == 0x22 then             -- '"'
 			jsmn_add_token(p, M.STRING, from+1, p.pos-1, p.parent)
-			return 0
-		end
-		if c == 0x5c and p.pos + 1 <= #s then -- '\\'
+			return true
+		elseif c == 0x5c then -- '\\'
+			if p.pos + 1 > #s then
+				p.pos = from
+				return false -- end of string at the quoted char
+			end
 			p.pos = p.pos + 1
 			local e = s:byte(p.pos)
 			local f = string.char
@@ -80,7 +83,8 @@ local function jsmn_parse_string(p, s)
 		end
 		p.pos = p.pos + 1
 	end
-	return true
+	p.pos = from
+	return false
 end
 
 local function jsmn_parse(s, p)
@@ -162,7 +166,7 @@ local function jsmn_parse(s, p)
 
 	for i = #p.tokens, 1, -1 do
 		if p.tokens[i].from > 0 and p.tokens[i].to == 0 then
-			return p, false, nil
+			return p, false, 'not closed objects/arrays'
 		end
 	end
 
