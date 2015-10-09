@@ -131,14 +131,13 @@ test('String', function()
 		{jsmn.STRING, s='hello world'},
 	})
 	
-	---- FIXME
-	--local esc = 'escaped: \\/\r\n\t\b\f\"\\'
-	--local s = '{"strVar" : "'..esc..'"}'
-	--tokenize(s, {
-		--{jsmn.OBJECT, size=1},
-		--{jsmn.STRING, s='strVar', size=1},
-		--{jsmn.STRING, s=esc},
-	--})
+	local esc = 'escaped: \\/\\r\\n\\t\\b\\f\\"\\\\'
+	local s = '{"strVar" : "'..esc..'"}'
+	tokenize(s, {
+		{jsmn.OBJECT, size=1},
+		{jsmn.STRING, s='strVar', size=1},
+		{jsmn.STRING, s=esc},
+	})
 
 	tokenize('{"strVar": ""}', {
 		{jsmn.OBJECT, size=1},

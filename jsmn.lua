@@ -57,28 +57,32 @@ local function jsmn_parse_string(p, s)
 				p.pos = from
 				return false -- end of string at the quoted char
 			end
+
 			p.pos = p.pos + 1
 			local e = s:byte(p.pos)
-			local f = string.char
-			if e == 0x75 then -- '\u'
-				for i = 1, 4 do
-					if p.pos + i > #s then
-						p.pos = from
-						return false -- string is too short for unicode
-					end
-					local u = s:byte(p.pos+i)
-					if not ((u >= 48 and u <= 57) or   -- 0..9
-						(u >= 65 and u <= 70) or     -- A..F
-						(u >= 97 and u <= 102)) then -- a..f
-						p.pos = from
-						return false -- invalid hex unicode digit
-					end
-				end
-			elseif e ~= 0x22 and e ~= 0x2f and e ~= 0x5c and
+
+			if e ~= 0x22 and e ~= 0x2f and e ~= 0x5c and
 				e ~= 0x62 and e ~= 0x66 and e ~= 0x72 and e ~= 0x6e and
 				e ~= 0x74 then -- [",/,\, b, f, r, n, t]
-				p.pos = from
-				return false -- invalid escape
+
+				if e == 0x75 then -- '\u'
+					for i = 1, 4 do
+						if p.pos + i > #s then
+							p.pos = from
+							return false -- string is too short for unicode
+						end
+						local u = s:byte(p.pos+i)
+						if not ((u >= 48 and u <= 57) or   -- 0..9
+							(u >= 65 and u <= 70) or     -- A..F
+							(u >= 97 and u <= 102)) then -- a..f
+							p.pos = from
+							return false -- invalid hex unicode digit
+						end
+					end
+				else
+					p.pos = from
+					return false -- invalid escape
+				end
 			end
 		end
 		p.pos = p.pos + 1
