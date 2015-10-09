@@ -22,8 +22,7 @@ local function jsmn_parse_primitive(p, s)
 	local found = false
 	while p.pos <= #s do
 		local c = s:byte(p.pos)
-		if (not p.strict and c == 0x3a) or
-			c == 0x9 or c == 0xd or c == 0xa or c == 0x20 or
+		if c == 0x9 or c == 0xd or c == 0xa or c == 0x20 or
 			c == 0x2c or c == 0x5d or c == 0x7d then
 			found = true
 			break
@@ -35,15 +34,14 @@ local function jsmn_parse_primitive(p, s)
 		p.pos = p.pos + 1
 	end
 
-	if not found and p.strict then
+	if found then
+		p.pos = p.pos - 1
+		jsmn_add_token(p, M.PRIMITIVE, from, p.pos, p.parent)
+		return true
+	else
 		p.pos = from
 		return false
 	end
-
-	p.pos = p.pos - 1
-
-	jsmn_add_token(p, M.PRIMITIVE, from, p.pos, p.parent)
-	return true
 end
 
 local function jsmn_parse_string(p, s)
@@ -85,13 +83,11 @@ local function jsmn_parse_string(p, s)
 	return true
 end
 
-local function jsmn_parse(p, s, strict)
+local function jsmn_parse(p, s)
 	p = p or {
 		str = s,
 		pos = 1,         -- position in the string
 		parent = 0,      -- index of the previous (parent) token
-		-- strict mode is the default one
-		strict = strict == nil and true or strict,
 		tokens = {}
 	}
 	while p.pos <= #s do
@@ -142,8 +138,7 @@ local function jsmn_parse(p, s, strict)
 			if p.parent > 0 and parent.token == M.STRING then
 				p.parent = p.tokens[p.parent].parent
 			end
-		elseif not p.strict or               -- in non-strict mode any word is valid
-			(c >= 0x30 and c <= 0x39) or       -- '0'..'9'
+		elseif (c >= 0x30 and c <= 0x39) or       -- '0'..'9'
 			c == 0x2d or                       -- '-', 't', 'f', 'n'
 			c == 0x74 or c == 0x66 or c == 0x6e then
 
@@ -174,7 +169,7 @@ local function jsmn_parse(p, s, strict)
 	return p, true, nil
 end
 
-M.parse = function(s, strict) return jsmn_parse(nil, s, strict) end
+M.parse = function(s) return jsmn_parse(nil, s) end
 
 return M
 
